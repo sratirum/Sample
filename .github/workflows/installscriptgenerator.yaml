@@ -1,0 +1,35 @@
+name: Java CI
+
+on: [push]
+
+jobs:
+  GenerateInstallScripts:
+    runs-on: self-hosted
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with: 
+          repository: CA-ILO-CWIS/CWIS
+      
+    - name: setup python
+      uses: actions/setup-python@v3
+      with:
+          python-version: 3.8
+      
+    - name: Running requirements.txt
+      run: python3 -m pip install -r ./apps/requirements.txt 
+
+      #- name: Running python Install script
+      #  run: python3 ./apps/installscript/src/main.py --git-checkout False -b ${{ github.event.inputs.baseline_commit }} -t ${{ github.event.inputs.target_commit }}
+        
+    - name: Run InstallScriptGenerator
+      shell: sh
+      run: echo "python3 ./tmp/generator/src/main.py --git-checkout False -b ${params.BASELINE_COMMIT} -t ${params.TARGET_COMMIT}"
+
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v3
+
+    - name: Upload Install Script Archive
+      if: params.GCS_UPLOAD && env.BRANCH_NAME.endsWith("master")
+      run: sh 'cd INSTALL/1_automatic_deployment && echo *.zip'
+
